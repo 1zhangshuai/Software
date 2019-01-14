@@ -7,6 +7,7 @@
 #include "attitude_Aircraft.h"
 #include "remot_DataAnaly.h"
 #include "control_Aircraft.h"
+#include "safe_Operation.h"
 
 #ifdef PLATFORM_RTOS__RT_THREAD
 #include "sys_OsTask.h"
@@ -935,10 +936,23 @@ void hci_show_on_run_progress(void)
 		}
 		
 		/*在待机页面,显示CPU利用率*/
-		bsp_OLED0_96_ShowString(&g_sOled0_96, 38, 3, (u8*)&"CPU:", OLED096_ACSII_6X8);
+		bsp_OLED0_96_ShowString(&g_sOled0_96, 38, 2, (u8*)&"CPU:", OLED096_ACSII_6X8);
 		math_Integer_Number_Analy(g_psUav_Status->UavProgrameStatus.CpuUse.major, 2, &g_sMathIntegerAnaly);				
-		bsp_OLED0_96_Show_Calendar(&g_sOled0_96, 66, 3, OLED096_ACSII_6X8, g_sMathIntegerAnaly);
-		bsp_OLED0_96_ShowChar(&g_sOled0_96, 78, 3, '%', OLED096_ACSII_6X8);
+		bsp_OLED0_96_Show_Calendar(&g_sOled0_96, 66, 2, OLED096_ACSII_6X8, g_sMathIntegerAnaly);
+		bsp_OLED0_96_ShowChar(&g_sOled0_96, 78, 2, '%', OLED096_ACSII_6X8);
+		
+		/*在待机页面,显示RTOS调度状态*/
+		bsp_OLED0_96_ShowString(&g_sOled0_96, 38, 3, (u8*)&"TASK:", OLED096_ACSII_6X8);
+		if (gps_SafeOperation->Task_Check_Status.TASK_CHECK_STATUS == SAFE_TASK_CHECK_NORMAL)
+		{
+			/*任务调度正常*/
+			bsp_OLED0_96_ShowString(&g_sOled0_96, 68, 3, (u8*)&"OK", OLED096_ACSII_6X8);
+		}
+		else
+		{
+			/*任务调度异常*/
+			bsp_OLED0_96_ShowString(&g_sOled0_96, 68, 3, (u8*)&"NO", OLED096_ACSII_6X8);
+		}
 	}
 }
 
@@ -1026,29 +1040,29 @@ Ep:±11.411 Ey:±111.11
 	
 	/*=== 1.ACC ===*/
 	/*1.1显示AHRS -> Sensor -> IMU -> Acc -> x*/
-	math_Floater_Number_Analy(g_psAccOrigion->x, 7, &g_sMathFloaterAnaly);
+	math_Floater_Number_Analy(g_psAccAttitude->x, 7, &g_sMathFloaterAnaly);
 	bsp_OLED0_96_Show_Floater(&g_sOled0_96, xNbr1Pos, 2, OLED096_ACSII_6X8, g_sMathFloaterAnaly);
 	
 	/*1.2显示AHRS -> Sensor -> IMU -> Acc -> y*/
-	math_Floater_Number_Analy(g_psAccOrigion->y, 7, &g_sMathFloaterAnaly);
+	math_Floater_Number_Analy(g_psAccAttitude->y, 7, &g_sMathFloaterAnaly);
 	bsp_OLED0_96_Show_Floater(&g_sOled0_96, xNbr2Pos, 2, OLED096_ACSII_6X8, g_sMathFloaterAnaly);
 	
 	/*1.3显示AHRS -> Sensor -> IMU -> Acc -> z*/
-	math_Floater_Number_Analy(g_psAccOrigion->z, 7, &g_sMathFloaterAnaly);
+	math_Floater_Number_Analy(g_psAccAttitude->z, 7, &g_sMathFloaterAnaly);
 	bsp_OLED0_96_Show_Floater(&g_sOled0_96, xNbr1Pos, 3, OLED096_ACSII_6X8, g_sMathFloaterAnaly);	
 	
 	
 	/*=== 2.GYRO ===*/	
 	/*2.1显示AHRS -> Sensor -> IMU -> Gyro -> x*/
-	math_Floater_Number_Analy(g_psGyroAttData->x, 7, &g_sMathFloaterAnaly);
+	math_Floater_Number_Analy(g_psGyroAttitude->x, 7, &g_sMathFloaterAnaly);
 	bsp_OLED0_96_Show_Floater(&g_sOled0_96, xNbr2Pos, 3, OLED096_ACSII_6X8, g_sMathFloaterAnaly);
 	
 	/*2.2显示AHRS -> Sensor -> IMU -> Gyro -> y*/
-	math_Floater_Number_Analy(g_psGyroAttData->y, 7, &g_sMathFloaterAnaly);
+	math_Floater_Number_Analy(g_psGyroAttitude->y, 7, &g_sMathFloaterAnaly);
 	bsp_OLED0_96_Show_Floater(&g_sOled0_96, xNbr1Pos, 4, OLED096_ACSII_6X8, g_sMathFloaterAnaly);
 	
 	/*2.3显示AHRS -> Sensor -> IMU -> Gyro -> z*/
-	math_Floater_Number_Analy(g_psGyroAttData->z, 7, &g_sMathFloaterAnaly);
+	math_Floater_Number_Analy(g_psGyroAttitude->z, 7, &g_sMathFloaterAnaly);
 	bsp_OLED0_96_Show_Floater(&g_sOled0_96, xNbr2Pos, 4, OLED096_ACSII_6X8, g_sMathFloaterAnaly);	
 	
 	
@@ -1180,11 +1194,11 @@ UzH:±6666  UcH:±6666
 	
 	
 	/*=== 3.UltrHeight ===*/
-	/*2.1显示BeroHeight -> Height -> BERO -> zeroHeight*/
+	/*2.1显示BeroHeight -> Height -> ULTR -> zeroHeight*/
 	math_Integer_Number_Analy(g_psAttitudeAll->zeroUltrHeight, 4, &g_sMathIntegerAnaly);
 	bsp_OLED0_96_Show_Integer(&g_sOled0_96, xNbr1Pos2, 7, OLED096_ACSII_6X8, g_sMathIntegerAnaly);
 	
-	/*2.1显示BeroHeight -> Height -> BERO -> curHeight*/
+	/*2.1显示BeroHeight -> Height -> ULTR -> curHeight*/
 	math_Integer_Number_Analy(g_psAttitudeAll->nowUltrAltitude, 4, &g_sMathIntegerAnaly);	
 	bsp_OLED0_96_Show_Integer(&g_sOled0_96, xNbr2Pos2, 7, OLED096_ACSII_6X8, g_sMathIntegerAnaly);
 }
