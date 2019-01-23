@@ -46,7 +46,7 @@ static u8 thread_base_module_stack[RTOS_THREAD_STACK_BASE_MODULE];
 static struct rt_thread base_module_thread;	
 
 void rt_entry_thread_base_module(void* parameter)
-{
+{	
 	while(1)
 	{
 		/*等待信号量被释放*/
@@ -66,8 +66,13 @@ void rt_entry_thread_base_module(void* parameter)
 		#endif
 		
 		/*RGB*/
-		#ifdef HW_CUT__USE_RGB  
-		thread_rgb_ctrl(parameter);
+		#ifdef HW_CUT__USE_RGB
+		bsp_rgb_work_list_show(&g_sRgb);
+		#endif		
+		
+		/*BEEP*/
+		#ifdef HW_CUT__USE_BEEP
+	
 		#endif		
 	}
 }                                     
@@ -113,7 +118,7 @@ static struct rt_thread euler_angle_calculate_thread;
 
 void rt_entry_thread_euler_angle_calculate(void* parameter)
 {
-	while(1)
+	while(1) 
 	{
 		/*等待信号量被释放*/
 		rt_sem_take(&euler_angle_sem, RT_WAITING_FOREVER);
@@ -266,7 +271,7 @@ void rt_entry_gps_data_horizontal_fusion(void* parameter)
 		#endif
 		
 		/*机体系->导航系 加速度*/
-		sins_get_body_relative_earth_acc(g_psAccSINS);
+		sins_get_body_relative_earth_acc(g_psAccSINS);		
 		
 		/*HOME已经设定,即可进行数据融合*/
 		if (g_sUav_Status.HOME_SET_STATUS == UAV_HOME_SET_YES)
@@ -289,7 +294,7 @@ void rt_entry_gps_data_horizontal_fusion(void* parameter)
 ALIGN(RT_ALIGN_SIZE)
 
 static u8 thread_opticflow_data_horizontal_fusion_stack[RTOS_THREAD_STACK_SIZE_OPTICFLOW_DATA_HORIZONTAL_FUSION];
-static struct rt_thread opticflow_data_horizontal_fusion_thread;	
+static struct rt_thread opticflow_data_horizontal_fusion_thread;
 
 void rt_entry_opticflow_data_horizontal_fusion(void* parameter)
 {
@@ -299,13 +304,13 @@ void rt_entry_opticflow_data_horizontal_fusion(void* parameter)
 		rt_sem_take(&opflow_hor_fusion_sem, RT_WAITING_FOREVER);
 
 		/*线程执行周期计算*/
-		get_Period_Execute_Time_Info(&(g_psSystemPeriodExecuteTime->OpflowHorFusion));		
+		get_Period_Execute_Time_Info(&(g_psSystemPeriodExecuteTime->OpflowHorFusion));
 		
 		/*对光流数据进行处理,计算出需要的速度,位移信息*/
 		if (g_sUav_Status.UavSenmodStatus.Horizontal.Opticflow.DATA_STATUS == UAV_SENMOD_DATA_OK)
 		{
 
-		}	
+		}
 	}
 }
 
@@ -330,7 +335,7 @@ void rt_entry_uav_ctrl_system(void* parameter)
 		remot_get_all_channel_data(g_psRemotData, g_psReceiverAnaly);
 	
 		/*检测遥控和飞行器通信是否正常(必须在 "更新遥控数据"后面执行)*/
-		status_check_aircraft_remot_communication(&g_sUavRemotCMCDog, g_psUav_Status);
+		status_check_uav_wireless(&g_sUavRemotCMCDog, g_psUav_Status);
 	
 		/*检测遥控锁定状态*/
 		remot_aircraft_lock_and_unlock();
@@ -350,7 +355,7 @@ ALIGN(RT_ALIGN_SIZE)
 static u8 thread_uav_calib_system_stack[RTOS_THREAD_STACK_SIZE_UAV_CALIB_SYSTEM];
 static struct rt_thread uav_calib_system_thread;
 
-void rt_entry_tuav_calib_system(void* parameter)
+void rt_entry_uav_calib_system(void* parameter)
 {
 	while(1)
 	{	
@@ -396,6 +401,9 @@ void rt_entry_tuav_calib_system(void* parameter)
 		if (1){}
 		
 		/*水平角度校准*/
+		if (1){}
+			
+		/*遥控行程校准*/
 		if (1){}
 	}
 }
@@ -508,6 +516,11 @@ void rt_entry_thread_task_status_check(void* parameter)
 		
 		/*安全:判断任务调度是否正常,及故障处理*/
 		safe_task_status_check(&gs_SafeOperation);
+		
+		/*OLED显示数据时禁止解锁*/
+		#if (SAFE_FORBID_UNLOCK_WHEN_OLED_SHOW == SYS_ENABLE)
+		safe_watch_oled_uav_auto_lock(&g_sUav_Status, &g_sHciShowPage);
+		#endif
 	}
 }
 
@@ -651,7 +664,7 @@ void rtos_thread_create(void)
 /* 0.传感器校准 */
 	err = rt_thread_init(&uav_calib_system_thread,
 						 "rt_uav_calib",
-						 rt_entry_tuav_calib_system,
+						 rt_entry_uav_calib_system,
 						 RT_NULL,
 						 thread_uav_calib_system_stack,
 						 sizeof(thread_uav_calib_system_stack),

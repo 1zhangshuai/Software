@@ -14,9 +14,9 @@
 /*导航系*/
 typedef enum
 {
-	EARTH_FRAME_X = 0,	/*导航系 x-lon-E*/
-	EARTH_FRAME_Y = 1,	/*导航系 y-lat-N*/
-	EARTH_FRAME_Z = 2,  /*导航系 z-het-U*/
+	EARTH_FRAME_X = 0,	/*导航系 X-lon-E*/
+	EARTH_FRAME_Y = 1,	/*导航系 Y-lat-N*/
+	EARTH_FRAME_Z = 2,  /*导航系 Z-het-U*/
 }EARTH_FRAME_AXIS;
 
 /*载体系*/
@@ -57,7 +57,7 @@ typedef struct
 	fp32 		       estimatePos[3];								/*本次观测位置*/
 	SINS_FUSION_STATUS FUSION_STATUS[2];							/*惯导融合状态*/
 	
-	u16				   sensorDataSync5ms;							/*传感器数据同步cnt*/
+	u16				   sensorDataSync5ms[3];					    /*传感器数据同步cnt*/
 }SINS;
 
 /*三阶互补*/
